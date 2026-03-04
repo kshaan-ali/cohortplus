@@ -20,63 +20,121 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [initializing, setInitializing] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Listen for auth state changes - handles initial session too
+  // Initialize auth state
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        // Only set loading true if we are in a transition state
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          setLoading(true);
-        }
+    let mounted = true;
 
-        try {
+    // Safety timeout: never stay in initializing state longer than 6 seconds
+    const safetyTimer = setTimeout(() => {
+      if (mounted) setInitializing(false);
+    }, 6000);
+
+    const initAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (mounted) {
           if (session?.user) {
-            // Add a strict timeout to avoid locking the UI if backend is slow
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 2000);
+            // Optimistic set from session metadata
+            const metadataRole = (session.user.user_metadata?.role as UserRole) || 'student';
+            const initialUser: User = {
+              id: session.user.id,
+              email: session.user.email || '',
+              role: metadataRole,
+            };
+            setUser(initialUser);
 
-            try {
-              const userData = await fetchUserProfile(session.user.id);
-              setUser(userData);
-            } finally {
-              clearTimeout(timeoutId);
-            }
+            // Fetch backend profile in background
+            fetchUserProfile(session.user.id).then((augmentedUser) => {
+              if (mounted && augmentedUser) setUser(augmentedUser);
+            });
           } else {
             setUser(null);
           }
-        } catch (err) {
-          console.warn('AuthContext: Auth state change handling failed', err);
-        } finally {
-          setLoading(false);
+        }
+      } catch (err) {
+        console.warn('AuthContext: Initial auth check failed', err);
+      } finally {
+        if (mounted) {
+          setInitializing(false);
+          clearTimeout(safetyTimer);
+        }
+      }
+    };
+
+    initAuth();
+
+    // Listen for subsequent auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!mounted) return;
+
+        if (event === 'SIGNED_OUT') {
+          setUser(null);
+          return;
+        }
+
+        if (session?.user) {
+          try {
+            const metadataRole = (session.user.user_metadata?.role as UserRole) || 'student';
+            const initialUser: User = {
+              id: session.user.id,
+              email: session.user.email || '',
+              role: metadataRole,
+            };
+            setUser(initialUser);
+
+            // Fetch backend profile in background
+            fetchUserProfile(session.user.id).then((augmentedUser) => {
+              if (mounted && augmentedUser) setUser(augmentedUser);
+            });
+          } catch (err) {
+            console.warn('AuthContext: onAuthStateChange processing failed', err);
+          }
         }
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+      clearTimeout(safetyTimer);
+    };
   }, []);
 
   // Fetch user profile - prefer backend (profiles table), fallback to Supabase metadata
-  const fetchUserProfile = async (_userId: string): Promise<User | null> => {
+  const fetchUserProfile = async (userId: string): Promise<User | null> => {
     try {
+      // 1. Get auth user from Supabase (should be cached/fast)
       const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) return null;
+      if (!authUser || authUser.id !== userId) return null;
 
+      // 2. Try backend profile with a strict 4s timeout
       try {
-        const profile = await profileApi.getMe();
+        // We wrap the profile call in a timeout race to avoid hanging the app
+        const profilePromise = profileApi.getMe();
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Profile fetch timeout')), 4000)
+        );
+
+        const profile = await Promise.race([profilePromise, timeoutPromise]) as any;
+
         if (profile) {
           return {
             id: authUser.id,
-            email: authUser.email || profile.name || '',
+            email: authUser.email || profile.email || profile.name || '',
             role: (profile.role as UserRole) || 'student',
           };
         }
-      } catch {
-        // Backend profile not found, use metadata
+      } catch (err) {
+        console.warn('Backend profile fetch failed or timed out, using metadata fallback', err);
       }
 
+      // 3. Fallback to Supabase metadata
       const role = (authUser.user_metadata?.role as UserRole) || 'student';
       return {
         id: authUser.id,
@@ -84,7 +142,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role,
       };
     } catch (err) {
-      console.error('Error fetching user profile:', err);
+      console.error('Error in fetchUserProfile:', err);
       return null;
     }
   };
@@ -103,8 +161,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (data.user) {
+        // Optimistic update
+        const role = (data.user.user_metadata?.role as UserRole) || 'student';
+        setUser({
+          id: data.user.id,
+          email: data.user.email || '',
+          role,
+        });
+
+        // Full profile fetch in background
         const userData = await fetchUserProfile(data.user.id);
-        setUser(userData);
+        if (userData) setUser(userData);
       }
     } catch (err: any) {
       setError(err.message || 'Failed to login. Please try again.');
@@ -180,7 +247,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const value: AuthContextType = {
     user,
-    loading,
+    loading: loading || initializing,
     error,
     login,
     register,

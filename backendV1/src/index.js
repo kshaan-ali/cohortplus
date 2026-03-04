@@ -1,4 +1,18 @@
 import express from 'express';
+import dns from 'dns';
+
+// DNS Override for Supabase to bypass ISP issues (e.g. Jio DNS misrouting)
+const originalLookup = dns.lookup;
+dns.lookup = (hostname, options, callback) => {
+  if (hostname === 'rsaidiaymwnvzakzlaoq.supabase.co') {
+    const cb = typeof options === 'function' ? options : callback;
+    const opts = typeof options === 'object' ? options : {};
+    if (opts.all) return cb(null, [{ address: '172.64.149.246', family: 4 }]);
+    return cb(null, '172.64.149.246', 4);
+  }
+  return originalLookup(hostname, options, callback);
+};
+
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { supabase } from './config/supabase.js';
@@ -11,6 +25,7 @@ import profileRoutes from './routes/profile.js';
 import enrollmentRoutes from './routes/enrollments.js';
 import webhookRoutes from './routes/webhooks.js';
 import materialRoutes from './routes/materials.js';
+import chatRoutes from './routes/chat.js';
 
 dotenv.config();
 
@@ -18,7 +33,7 @@ const app = express();
 
 /* -------------------- MIDDLEWARE -------------------- */
 app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : 'http://localhost:5173',
+  origin: '*',
   credentials: true
 }));
 app.use(express.json());
@@ -50,6 +65,7 @@ app.use('/api/live', liveRoutes);
 app.use('/api/recordings', recordingRoutes);
 app.use('/api/webhooks', webhookRoutes);
 app.use('/api/materials', materialRoutes);
+app.use('/api/chat', chatRoutes);
 
 /* -------------------- GLOBAL ERROR HANDLER -------------------- */
 app.use((err, req, res, next) => {

@@ -9,17 +9,20 @@ import { Register } from '@/pages/Register';
 import { Courses } from '@/pages/Courses';
 import { CourseDetails } from '@/pages/CourseDetails';
 import { MyEnrollments } from '@/pages/MyEnrollments';
+import { EnrollmentDetails } from '@/pages/EnrollmentDetails';
 import { MyRecordings } from '@/pages/MyRecordings';
 import { TutorDashboard } from '@/pages/TutorDashboard';
 import { LiveClass } from '@/pages/LiveClass';
+import { BatchChat } from '@/pages/BatchChat';
+import { CommunityList } from '@/pages/CommunityList';
 import { Toaster } from '@/components/ui/sonner';
 
 function App() {
   return (
-    <ThemeProvider attribute="class" defaultTheme="light">
+    <ThemeProvider attribute="class" defaultTheme="dark">
       <AuthProvider>
         <Router>
-          <div className="min-h-screen bg-gray-50">
+          <div className="min-h-screen bg-background">
             <Routes>
               {/* Auth Routes - No Navbar */}
               <Route path="/login" element={<Login />} />
@@ -44,6 +47,14 @@ function App() {
                           element={
                             <ProtectedRoute>
                               <MyEnrollments />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/enrollment/:id"
+                          element={
+                            <ProtectedRoute>
+                              <EnrollmentDetails />
                             </ProtectedRoute>
                           }
                         />
@@ -76,6 +87,24 @@ function App() {
                           }
                         />
 
+                        {/* Protected Community Chat Routes */}
+                        <Route
+                          path="/community"
+                          element={
+                            <ProtectedRoute>
+                              <CommunityList />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/community/:batchId"
+                          element={
+                            <ProtectedRoute>
+                              <BatchChat />
+                            </ProtectedRoute>
+                          }
+                        />
+
                         {/* 404 - Redirect to Home */}
                         <Route path="*" element={<Navigate to="/" replace />} />
                       </Routes>
@@ -84,7 +113,7 @@ function App() {
                 }
               />
             </Routes>
-            <Toaster position="top-right" />
+            <Toaster position="top-right" theme="dark" />
           </div>
         </Router>
       </AuthProvider>

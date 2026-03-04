@@ -1,6 +1,4 @@
-import { AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { cn } from '@/lib/utils';
+import { AlertCircle, X } from 'lucide-react';
 
 interface ErrorMessageProps {
   message: string | null;
@@ -12,22 +10,36 @@ export function ErrorMessage({ message, className, onDismiss }: ErrorMessageProp
   if (!message) return null;
 
   return (
-    <Alert 
-      variant="destructive" 
-      className={cn('mb-4', className)}
+    <div
+      className={className}
+      style={{
+        marginBottom: 16,
+        padding: '16px 24px',
+        background: 'rgba(239,68,68,0.08)',
+        border: '1px solid rgba(239,68,68,0.2)',
+        borderRadius: 16,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+      }}
     >
-      <AlertCircle className="h-4 w-4" />
-      <AlertDescription className="flex items-center justify-between">
-        <span>{message}</span>
-        {onDismiss && (
-          <button 
-            onClick={onDismiss}
-            className="text-sm underline hover:no-underline ml-4"
-          >
-            Dismiss
-          </button>
-        )}
-      </AlertDescription>
-    </Alert>
+      <AlertCircle size={18} color="#EF4444" style={{ flexShrink: 0 }} />
+      <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: '#FCA5A5' }}>{message}</span>
+      {onDismiss && (
+        <button
+          onClick={onDismiss}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            padding: 4,
+            color: 'var(--theme-muted)',
+            flexShrink: 0
+          }}
+        >
+          <X size={16} />
+        </button>
+      )}
+    </div>
   );
 }

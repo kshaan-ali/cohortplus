@@ -1,207 +1,142 @@
-# CohortPro - Cohort-Based Learning Platform
+# CohortPlus - Unified Learning Platform
 
-A modern React frontend for a SaaS cohort-based learning platform. Built with React, Vite, TypeScript, Tailwind CSS, Supabase Auth, and React Router.
+CohortPlus is a comprehensive SaaS cohort-based learning platform designed to provide a premium experience for both tutors and students. The ecosystem consists of a modern web application, a robust backend API, and a cross-platform mobile application.
 
-## Features
+---
 
-### Authentication
-- Email/password authentication via Supabase Auth
-- Role-based access control (Student/Tutor)
-- Protected routes with automatic redirects
-- Persistent session management
+## 🏗️ System Architecture
 
-### Public Pages
-- **Home Page**: Landing page with platform overview and features
-- **Courses Page**: Browse all available courses
-- **Course Details Page**: View course info and available batches with enrollment option
+The following diagram illustrates how the various components of CohortPlus interact:
 
-### Student Features
-- **My Enrollments**: View enrolled courses and upcoming live sessions
-- **Join Live Classes**: Interactive live session interface with Zoom Web SDK placeholder
+```mermaid
+graph TD
+    subgraph Clients
+        Web["Web App (React/Vite)"]
+        Mobile["Mobile App (Expo/React Native)"]
+    end
 
-### Tutor Features
-- **Tutor Dashboard**: Complete management interface with tabs for:
-  - Create and manage courses
-  - Create batches for courses
-  - Schedule live sessions
+    subgraph "Server Layer"
+        Backend["Backend API (Express/Node.js)"]
+    end
 
-## Tech Stack
+    subgraph "External Services"
+        Supabase["Supabase (Auth & Database)"]
+        Zoom["Zoom SDK (Live Classes)"]
+    end
 
+    Web <--> Backend
+    Mobile <--> Backend
+    Backend <--> Supabase
+    Backend <--> Zoom
+    Web <--> Supabase
+    Mobile <--> Supabase
+```
+
+---
+
+## 📂 Project Structure
+
+The repository is organized into three main components:
+
+| Directory | Component | Description |
+|-----------|-----------|-------------|
+| [`app/`](./app) | **Web Frontend** | Modern React dashboard for students and tutors. |
+| [`backendV1/`](./backendV1) | **Backend API** | Node.js/Express server handling logic and integrations. |
+| [`CohortPlus_mobile/`](./CohortPlus_mobile) | **Mobile App** | Cross-platform Expo app for on-the-go learning. |
+
+---
+
+## 🚀 Tech Stacks
+
+### 🌐 Web Frontend (`app/`)
 - **Framework**: React 18 + Vite
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **UI Components**: shadcn/ui (40+ pre-installed components)
-- **Authentication**: Supabase Auth
-- **Routing**: React Router DOM
-- **HTTP Client**: Axios
-- **Icons**: Lucide React
+- **Styling**: Tailwind CSS + shadcn/ui
+- **Auth**: Supabase Auth
+- **Communication**: Axios with JWT Interceptors
 
-## Project Structure
+### ⚙️ Backend API (`backendV1/`)
+- **Runtime**: Node.js (ES Modules)
+- **Framework**: Express.js
+- **Services**: Supabase SDK, Zoom Web SDK Integration
+- **Middleware**: CORS, Dotenv, Multer (File Uploads)
 
-```
-src/
-├── components/
-│   ├── layout/           # Layout components (Navbar, ProtectedRoute)
-│   ├── ui/              # shadcn/ui components
-│   └── ui-custom/       # Custom UI components (LoadingSpinner, ErrorMessage, EmptyState)
-├── contexts/
-│   └── AuthContext.tsx   # Authentication state management
-├── lib/
-│   ├── constants.ts      # App constants and routes
-│   ├── supabase.ts       # Supabase client configuration
-│   └── utils.ts          # Utility functions
-├── pages/
-│   ├── Home.tsx          # Landing page
-│   ├── Login.tsx         # Login page
-│   ├── Register.tsx      # Registration page
-│   ├── Courses.tsx       # Course listing
-│   ├── CourseDetails.tsx # Course details with batches
-│   ├── MyEnrollments.tsx # Student enrollments
-│   ├── TutorDashboard.tsx # Tutor management dashboard
-│   └── LiveClass.tsx     # Live session page
-├── services/
-│   └── api.ts            # API service layer with Axios
-├── types/
-│   └── index.ts          # TypeScript type definitions
-├── App.tsx               # Main app component with routing
-└── main.tsx             # Entry point
-```
+### 📱 Mobile App (`CohortPlus_mobile/`)
+- **Framework**: Expo + React Native
+- **Styling**: NativeWind (Tailwind for React Native)
+- **Navigation**: Expo Router (File-based)
+- **Theming**: Dark/Blue Premium Theme
 
-## Getting Started
+---
+
+## ✨ Key Features
+
+- **🔐 Unified Authentication**: Secure login/registration via Supabase with role-based access (Student/Tutor).
+- **🎓 Course Management**: Tutors can create courses, manage batches, and schedule live sessions.
+- **📚 Enrollment System**: Students can browse courses, enroll in batches, and track their progress.
+- **📹 Live Classes**: Integration with Zoom SDK for real-time interactive learning sessions.
+- **💬 Batch Chat**: Real-time communication within cohorts (planned/in-progress).
+- **📱 Mobile Sync**: Seamless experience across web and mobile devices.
+
+---
+
+## 🛠️ Getting Started
 
 ### Prerequisites
+- **Node.js**: v18 or higher
+- **npm**: v9 or higher
+- **Expo GO**: (Mobile development)
 
-- Node.js 18+
-- npm or yarn
-- Supabase account (for authentication)
+### Quick Setup
 
-### Installation
+1. **Clone the repository**:
+   ```bash
+   git clone <repository-url>
+   cd cohortplus
+   ```
 
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd cohortpro
-```
+2. **Backend Setup**:
+   ```bash
+   cd backendV1
+   npm install
+   # Configure .env (see .env.example)
+   npm start
+   ```
 
-2. Install dependencies:
-```bash
-npm install
-```
+3. **Web Setup**:
+   ```bash
+   cd ../app
+   npm install
+   # Configure .env (see .env.example)
+   npm run dev
+   ```
 
-3. Set up environment variables:
-```bash
-cp .env.example .env
-```
+4. **Mobile Setup**:
+   ```bash
+   cd ../CohortPlus_mobile
+   npm install
+   npx expo start
+   ```
 
-4. Update the `.env` file with your Supabase credentials:
-```env
-VITE_SUPABASE_URL=your_supabase_project_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-VITE_API_BASE_URL=http://localhost:8000/api
-```
+---
 
-5. Start the development server:
-```bash
-npm run dev
-```
+## 🔑 Environment Configuration
 
-6. Build for production:
-```bash
-npm run build
-```
+You will need to set up `.env` files in each project directory. Key variables include:
 
-## Environment Variables
+- `SUPABASE_URL`: Your Supabase project URL.
+- `SUPABASE_ANON_KEY`: Your Supabase anonymous key.
+- `ZOOM_SDK_KEY` / `ZOOM_SDK_SECRET`: For live session integration.
+- `API_BASE_URL`: Pointer to the backend server (e.g., `http://localhost:5000/api`).
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `VITE_SUPABASE_URL` | Your Supabase project URL | Yes |
-| `VITE_SUPABASE_ANON_KEY` | Your Supabase anonymous key | Yes |
-| `VITE_API_BASE_URL` | Backend API base URL | No (defaults to localhost) |
+---
 
-## API Integration
+## 📄 Documentation
 
-The project includes a complete API service layer in `src/services/api.ts`. Currently, it uses mock data for development. To connect to your backend:
+- [Project Implementation Summary](./PROJECT_SUMMARY.md)
+- [Web Frontend README](./app/README.md)
+- [Mobile App README](./CohortPlus_mobile/README.md)
 
-1. Update the API functions in `src/services/api.ts` to call your actual endpoints
-2. The Axios instance automatically attaches the JWT token from Supabase to all requests
-3. All API functions are typed with TypeScript interfaces
+---
 
-### Example API Call
-
-```typescript
-import { coursesApi } from '@/services/api';
-
-// Get all courses
-const courses = await coursesApi.getAll();
-
-// Get course by ID
-const course = await coursesApi.getById('course-id');
-```
-
-## Authentication Flow
-
-1. Users register/login via Supabase Auth
-2. User role (student/tutor) is stored in user_metadata
-3. JWT token is automatically attached to API requests
-4. Protected routes check authentication state
-5. Role-based routes check user role
-
-## Routing
-
-| Route | Access | Description |
-|-------|--------|-------------|
-| `/` | Public | Home page |
-| `/login` | Public | Login page |
-| `/register` | Public | Registration page |
-| `/courses` | Public | Course listing |
-| `/courses/:id` | Public | Course details |
-| `/my-enrollments` | Authenticated (Students) | Student enrollments |
-| `/tutor-dashboard` | Authenticated (Tutors) | Tutor dashboard |
-| `/live-class/:sessionId` | Authenticated | Live session page |
-
-## Customization
-
-### Adding New Pages
-
-1. Create the page component in `src/pages/`
-2. Add the route in `src/App.tsx`
-3. Add navigation link in `src/components/layout/Navbar.tsx` (if needed)
-
-### Adding New API Endpoints
-
-1. Add TypeScript interfaces in `src/types/index.ts`
-2. Add API functions in `src/services/api.ts`
-3. Use the API in your components
-
-### Styling
-
-- Tailwind CSS is pre-configured
-- shadcn/ui components are customizable
-- Global styles in `src/index.css`
-
-## Zoom Web SDK Integration
-
-The Live Class page includes a placeholder for Zoom Web SDK integration. To implement:
-
-1. Install Zoom Web SDK: `npm install @zoomus/websdk`
-2. Import and initialize the SDK in `src/pages/LiveClass.tsx`
-3. Use the credentials from `liveSessionsApi.getJoinCredentials()`
-
-## Production Deployment
-
-1. Build the application:
-```bash
-npm run build
-```
-
-2. The `dist/` folder contains the production build
-
-3. Deploy to your hosting platform (Vercel, Netlify, etc.)
-
-## Contributing
-
-This project is designed for educational purposes. Feel free to extend and customize for your needs.
-
-## License
-
-MIT License - feel free to use for your university projects!
+## ⚖️ License
+MIT License - Developed for educational and production-ready environments.

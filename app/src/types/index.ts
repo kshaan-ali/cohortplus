@@ -65,6 +65,17 @@ export interface CourseMaterial {
   created_at?: string;
 }
 
+// Chat Message Types
+export interface ChatMessage {
+  id: string;
+  batch_id: string;
+  sender_id: string;
+  sender_email: string;
+  sender_role: string;
+  message: string;
+  created_at: string;
+}
+
 // Auth Types
 export interface LoginCredentials {
   email: string;

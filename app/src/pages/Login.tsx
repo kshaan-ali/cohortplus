@@ -13,7 +13,8 @@ export function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const { login, loading, error, clearError } = useAuth();
+  const [submitting, setSubmitting] = useState(false);
+  const { login, error, clearError } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -28,40 +29,44 @@ export function Login() {
       return;
     }
 
+    setSubmitting(true);
     try {
       await login({ email, password });
       navigate(from, { replace: true });
     } catch (err) {
       // Error is handled by auth context
       console.error('Login failed:', err);
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Decorative background elements */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--primary)_0%,_transparent_70%)] opacity-[0.03] -z-10" />
       <div className="absolute top-0 right-0 -translate-y-12 translate-x-12 blur-3xl opacity-20">
-        <div className="w-96 h-96 bg-gradient-to-br from-indigo-400 to-purple-400 rounded-full" />
+        <div className="w-96 h-96 bg-primary rounded-full" />
       </div>
       <div className="absolute bottom-0 left-0 translate-y-12 -translate-x-12 blur-3xl opacity-20">
-        <div className="w-96 h-96 bg-gradient-to-tr from-blue-400 to-indigo-400 rounded-full" />
+        <div className="w-96 h-96 bg-blue-600 rounded-full" />
       </div>
 
       <div className="max-w-md w-full space-y-8 relative z-10">
         {/* Logo */}
         <div className="flex justify-center">
-          <Link to="/" className="flex items-center space-x-3">
-            <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-3 rounded-2xl shadow-lg">
-              <GraduationCap className="h-10 w-10 text-white" />
+          <Link to="/" className="flex items-center space-x-3 group">
+            <div className="bg-primary p-3 rounded-2xl shadow-lg shadow-primary/20">
+              <GraduationCap className="h-10 w-10 text-primary-foreground" />
             </div>
-            <span className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">CohortPlus</span>
+            <span className="text-3xl font-bold text-foreground">CohortPlus</span>
           </Link>
         </div>
 
-        <Card className="shadow-2xl border-0">
+        <Card className="shadow-2xl border-border bg-card">
           <CardHeader className="space-y-2 pb-6">
-            <CardTitle className="text-3xl font-bold text-center">Welcome back</CardTitle>
-            <CardDescription className="text-center text-base">
+            <CardTitle className="text-3xl font-bold text-center text-foreground">Welcome back</CardTitle>
+            <CardDescription className="text-center text-base text-muted-foreground">
               Enter your credentials to access your account
             </CardDescription>
           </CardHeader>
@@ -79,7 +84,7 @@ export function Login() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  disabled={loading}
+                  disabled={submitting}
                   autoComplete="email"
                 />
               </div>
@@ -94,7 +99,7 @@ export function Login() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    disabled={loading}
+                    disabled={submitting}
                     autoComplete="current-password"
                     className="pr-10"
                   />
@@ -115,10 +120,10 @@ export function Login() {
 
               <Button
                 type="submit"
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-6 text-lg"
-                disabled={loading}
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-6 text-lg shadow-lg shadow-primary/20"
+                disabled={submitting}
               >
-                {loading ? (
+                {submitting ? (
                   <>
                     <LoadingSpinner size="sm" className="mr-2" />
                     Signing in...
@@ -131,11 +136,11 @@ export function Login() {
           </CardContent>
 
           <CardFooter className="flex flex-col space-y-4">
-            <div className="text-sm text-center text-gray-600">
+            <div className="text-sm text-center text-muted-foreground">
               Don't have an account?{' '}
               <Link
                 to="/register"
-                className="text-indigo-600 hover:text-indigo-500 font-medium"
+                className="text-primary hover:text-primary font-medium"
               >
                 Create an account
               </Link>

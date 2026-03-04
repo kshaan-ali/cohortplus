@@ -7,6 +7,7 @@ import type {
   Enrollment,
   LiveSession,
   CourseMaterial,
+  ChatMessage,
 } from '@/types';
 
 // Create Axios instance - baseURL is /api, so /courses = /api/courses
@@ -264,6 +265,35 @@ export const materialsApi = {
 
   delete: async (id: string): Promise<void> => {
     await apiClient.delete(`/materials/${id}`);
+  },
+};
+
+// Chat API
+export const chatApi = {
+  getMessages: async (batchId: string, before?: string): Promise<ChatMessage[]> => {
+    const params = before ? `?before=${before}&limit=50` : '?limit=50';
+    const response = await apiClient.get(`/chat/${batchId}/messages${params}`);
+    return response.data || [];
+  },
+
+  sendMessage: async (batchId: string, message: string): Promise<ChatMessage> => {
+    const response = await apiClient.post(`/chat/${batchId}/messages`, { message });
+    return response.data;
+  },
+
+  checkAccess: async (batchId: string): Promise<{ hasAccess: boolean; batchInfo: any }> => {
+    const response = await apiClient.get(`/chat/${batchId}/access`);
+    return response.data;
+  },
+
+  getUserChats: async (): Promise<any[]> => {
+    const response = await apiClient.get('/chat/my-chats');
+    return response.data || [];
+  },
+
+  getParticipants: async (batchId: string): Promise<{ batch_id: string; course_name: string; total: number; participants: Array<{ id: string; name: string; role: string; joined_at: string | null }> }> => {
+    const response = await apiClient.get(`/batches/${batchId}/participants`);
+    return response.data;
   },
 };
 

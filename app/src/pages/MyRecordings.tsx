@@ -72,26 +72,26 @@ export function MyRecordings() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
             </div>
         );
     }
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-background text-foreground">
             <div className="mb-12">
-                <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight mb-2">My Recordings</h1>
-                <p className="text-lg text-gray-600">Access all your past live class recordings organized by batch.</p>
+                <h1 className="text-4xl font-extrabold text-foreground tracking-tight mb-2">My Recordings</h1>
+                <p className="text-lg text-muted-foreground">Access all your past live class recordings organized by batch.</p>
             </div>
 
             {Object.keys(groupedRecordings).length === 0 ? (
-                <Card className="bg-white border-dashed border-2">
+                <Card className="bg-card border-dashed border-2 border-border">
                     <CardContent className="flex flex-col items-center justify-center py-16">
-                        <div className="bg-indigo-50 p-4 rounded-full mb-4">
-                            <Video className="h-10 w-10 text-indigo-600" />
+                        <div className="bg-primary/10 p-4 rounded-full mb-4">
+                            <Video className="h-10 w-10 text-primary" />
                         </div>
-                        <h3 className="text-xl font-semibold text-gray-800 mb-2">No recordings found</h3>
-                        <p className="text-gray-500 text-center max-w-sm">
+                        <h3 className="text-xl font-semibold text-foreground mb-2">No recordings found</h3>
+                        <p className="text-muted-foreground text-center max-w-sm">
                             You haven't attended any recorded classes yet. Come back here after your first live session ends!
                         </p>
                     </CardContent>
@@ -101,18 +101,18 @@ export function MyRecordings() {
                     {Object.entries(groupedRecordings).map(([batchTitle, records]) => (
                         <section key={batchTitle} className="animate-in fade-in slide-in-from-bottom-4 duration-700">
                             <div className="flex items-center gap-3 mb-6">
-                                <div className="bg-indigo-600 p-2 rounded-lg">
+                                <div className="bg-primary p-2 rounded-lg">
                                     <GraduationCap className="h-5 w-5 text-white" />
                                 </div>
-                                <h2 className="text-2xl font-bold text-gray-900">{batchTitle}</h2>
-                                <Badge variant="outline" className="ml-2 bg-indigo-50 text-indigo-700 border-indigo-200">
+                                <h2 className="text-2xl font-bold text-foreground">{batchTitle}</h2>
+                                <Badge variant="outline" className="ml-2 bg-primary/10 text-primary border-primary/20">
                                     {records.length} {records.length === 1 ? 'Session' : 'Sessions'}
                                 </Badge>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                                 {records.map((rec) => (
-                                    <Card key={rec.id} className="group overflow-hidden hover:shadow-2xl transition-all duration-300 border-gray-100 bg-white">
+                                    <Card key={rec.id} className="group overflow-hidden hover:shadow-2xl transition-all duration-300 border-border bg-card">
                                         <div className="aspect-video relative overflow-hidden bg-gray-900">
                                             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10 opactiy-60" />
                                             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20">
@@ -124,20 +124,20 @@ export function MyRecordings() {
                                                 </Button>
                                             </div>
                                             {/* Placeholder for thumbnail since we don't have real ones yet */}
-                                            <div className="h-full w-full flex items-center justify-center text-indigo-200/20">
+                                            <div className="h-full w-full flex items-center justify-center text-primary/10">
                                                 <Video className="h-20 w-20" />
                                             </div>
-                                            <Badge className="absolute bottom-4 right-4 z-20 bg-black/50 backdrop-blur-md text-white border-0">
+                                            <Badge className="absolute bottom-4 right-4 z-20 bg-background/50 backdrop-blur-md text-foreground border-border">
                                                 {formatDuration(rec.duration)}
                                             </Badge>
                                         </div>
                                         <CardHeader className="pb-2">
-                                            <CardTitle className="text-lg font-bold group-hover:text-indigo-600 transition-colors">
+                                            <CardTitle className="text-lg font-bold group-hover:text-primary transition-colors text-foreground">
                                                 {rec.live_sessions.title}
                                             </CardTitle>
                                         </CardHeader>
                                         <CardContent>
-                                            <div className="flex items-center text-sm text-gray-500 gap-4">
+                                            <div className="flex items-center text-sm text-muted-foreground gap-4">
                                                 <div className="flex items-center gap-1">
                                                     <Calendar className="h-4 w-4" />
                                                     {formatDate(rec.created_at)}
@@ -149,7 +149,7 @@ export function MyRecordings() {
                                             </div>
                                             <Button
                                                 onClick={() => window.open(rec.recording_url, '_blank')}
-                                                className="w-full mt-6 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-6 rounded-xl"
+                                                className="w-full mt-6 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-6 rounded-xl"
                                             >
                                                 Watch Recording
                                             </Button>

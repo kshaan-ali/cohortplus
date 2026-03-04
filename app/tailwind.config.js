@@ -80,6 +80,9 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
         "caret-blink": "caret-blink 1.25s ease-out infinite",
       },
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
+      },
       fontSize: {
         xs: ['0.875rem', { lineHeight: '1.25rem' }],
         sm: ['1rem', { lineHeight: '1.5rem' }],
