@@ -8,12 +8,15 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { ErrorMessage } from '@/components/ui-custom/ErrorMessage';
 import { LoadingSpinner } from '@/components/ui-custom/LoadingSpinner';
 import { GraduationCap, Eye, EyeOff } from 'lucide-react';
+import { validateEmail, validateLoginPassword } from '@/lib/validation';
 
 export function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const { login, error, clearError } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -21,17 +24,38 @@ export function Login() {
   // Get the redirect path from location state, or default to home
   const from = (location.state as any)?.from?.pathname || '/';
 
+  const handleEmailBlur = () => {
+    if (email) {
+      const result = validateEmail(email);
+      setEmailError(result.error || null);
+    }
+  };
+
+  const handlePasswordBlur = () => {
+    if (password) {
+      const result = validateLoginPassword(password);
+      setPasswordError(result.error || null);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearError();
 
-    if (!email || !password) {
+    // Validate all fields
+    const emailResult = validateEmail(email);
+    const passwordResult = validateLoginPassword(password);
+
+    setEmailError(emailResult.error || null);
+    setPasswordError(passwordResult.error || null);
+
+    if (!emailResult.valid || !passwordResult.valid) {
       return;
     }
 
     setSubmitting(true);
     try {
-      await login({ email, password });
+      await login({ email: email.trim().toLowerCase(), password });
       navigate(from, { replace: true });
     } catch (err) {
       // Error is handled by auth context
@@ -82,11 +106,19 @@ export function Login() {
                   type="email"
                   placeholder="you@example.com"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (emailError) setEmailError(null);
+                  }}
+                  onBlur={handleEmailBlur}
                   required
                   disabled={submitting}
                   autoComplete="email"
+                  className={emailError ? 'border-red-500 focus-visible:ring-red-500' : ''}
                 />
+                {emailError && (
+                  <p className="text-sm text-red-500 mt-1">{emailError}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -97,11 +129,15 @@ export function Login() {
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Enter your password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (passwordError) setPasswordError(null);
+                    }}
+                    onBlur={handlePasswordBlur}
                     required
                     disabled={submitting}
                     autoComplete="current-password"
-                    className="pr-10"
+                    className={`pr-10 ${passwordError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                   />
                   <button
                     type="button"
@@ -116,6 +152,9 @@ export function Login() {
                     )}
                   </button>
                 </div>
+                {passwordError && (
+                  <p className="text-sm text-red-500 mt-1">{passwordError}</p>
+                )}
               </div>
 
               <Button

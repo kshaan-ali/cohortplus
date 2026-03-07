@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -8,8 +8,16 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ErrorMessage } from '@/components/ui-custom/ErrorMessage';
 import { LoadingSpinner } from '@/components/ui-custom/LoadingSpinner';
-import { GraduationCap, Eye, EyeOff } from 'lucide-react';
+import { GraduationCap, Eye, EyeOff, Check, X } from 'lucide-react';
 import type { UserRole } from '@/types';
+import {
+  validateEmail,
+  validateSignupPassword,
+  validateConfirmPassword,
+  validateRole,
+  getPasswordStrength,
+  PASSWORD_RULES,
+} from '@/lib/validation';
 
 export function Register() {
   const [email, setEmail] = useState('');
@@ -18,34 +26,81 @@ export function Register() {
   const [role, setRole] = useState<UserRole>('student');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [passwordError, setPasswordError] = useState<string | null>(null);
+
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
+  const [confirmPasswordError, setConfirmPasswordError] = useState<string | null>(null);
 
   const { register, loading, error, clearError } = useAuth();
   const navigate = useNavigate();
 
-  const validatePasswords = () => {
-    if (password !== confirmPassword) {
-      setPasswordError('Passwords do not match');
-      return false;
+  // Live password strength
+  const strength = useMemo(() => getPasswordStrength(password), [password]);
+  const showStrength = password.length > 0;
+
+  // Count how many rules pass for the strength bar
+  const passedCount = PASSWORD_RULES.filter((r) => strength[r.key]).length;
+  const strengthPercent = (passedCount / PASSWORD_RULES.length) * 100;
+  const strengthColor =
+    strengthPercent <= 20
+      ? 'bg-red-500'
+      : strengthPercent <= 60
+        ? 'bg-yellow-500'
+        : strengthPercent < 100
+          ? 'bg-blue-500'
+          : 'bg-green-500';
+
+  const handleEmailBlur = () => {
+    if (email) {
+      const result = validateEmail(email);
+      setEmailError(result.error || null);
     }
-    if (password.length < 6) {
-      setPasswordError('Password must be at least 6 characters');
-      return false;
+  };
+
+  const handlePasswordBlur = () => {
+    if (password) {
+      const result = validateSignupPassword(password);
+      setPasswordErrors(result.errors);
     }
-    setPasswordError(null);
-    return true;
+    // Re-validate confirm if it has a value
+    if (confirmPassword) {
+      const cpResult = validateConfirmPassword(password, confirmPassword);
+      setConfirmPasswordError(cpResult.error || null);
+    }
+  };
+
+  const handleConfirmPasswordBlur = () => {
+    if (confirmPassword) {
+      const result = validateConfirmPassword(password, confirmPassword);
+      setConfirmPasswordError(result.error || null);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearError();
 
-    if (!validatePasswords()) {
+    // Validate all fields
+    const emailResult = validateEmail(email);
+    const passwordResult = validateSignupPassword(password);
+    const confirmResult = validateConfirmPassword(password, confirmPassword);
+    const roleResult = validateRole(role);
+
+    setEmailError(emailResult.error || null);
+    setPasswordErrors(passwordResult.errors);
+    setConfirmPasswordError(confirmResult.error || null);
+
+    if (
+      !emailResult.valid ||
+      !passwordResult.valid ||
+      !confirmResult.valid ||
+      !roleResult.valid
+    ) {
       return;
     }
 
     try {
-      await register({ email, password, role });
+      await register({ email: email.trim().toLowerCase(), password, role });
       navigate('/');
     } catch (err) {
       // Error is handled by auth context
@@ -87,6 +142,7 @@ export function Register() {
             <ErrorMessage message={error} onDismiss={clearError} />
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Email */}
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -94,27 +150,39 @@ export function Register() {
                   type="email"
                   placeholder="you@example.com"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (emailError) setEmailError(null);
+                  }}
+                  onBlur={handleEmailBlur}
                   required
                   disabled={loading}
                   autoComplete="email"
+                  className={emailError ? 'border-red-500 focus-visible:ring-red-500' : ''}
                 />
+                {emailError && (
+                  <p className="text-sm text-red-500 mt-1">{emailError}</p>
+                )}
               </div>
 
+              {/* Password */}
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <div className="relative">
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="Create a password"
+                    placeholder="Create a strong password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (passwordErrors.length) setPasswordErrors([]);
+                    }}
+                    onBlur={handlePasswordBlur}
                     required
                     disabled={loading}
                     autoComplete="new-password"
-                    className="pr-10"
-                    minLength={6}
+                    className={`pr-10 ${passwordErrors.length > 0 ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                   />
                   <button
                     type="button"
@@ -129,9 +197,40 @@ export function Register() {
                     )}
                   </button>
                 </div>
-                <p className="text-xs text-gray-500">Must be at least 6 characters</p>
+
+                {/* Password strength indicator */}
+                {showStrength && (
+                  <div className="space-y-2 mt-2">
+                    {/* Strength bar */}
+                    <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-300 ${strengthColor}`}
+                        style={{ width: `${strengthPercent}%` }}
+                      />
+                    </div>
+                    {/* Rules checklist */}
+                    <ul className="space-y-1">
+                      {PASSWORD_RULES.map((rule) => {
+                        const passed = strength[rule.key];
+                        return (
+                          <li key={rule.key} className="flex items-center gap-1.5 text-xs">
+                            {passed ? (
+                              <Check className="h-3.5 w-3.5 text-green-500 shrink-0" />
+                            ) : (
+                              <X className="h-3.5 w-3.5 text-red-400 shrink-0" />
+                            )}
+                            <span className={passed ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}>
+                              {rule.label}
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                )}
               </div>
 
+              {/* Confirm Password */}
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirm Password</Label>
                 <div className="relative">
@@ -140,11 +239,15 @@ export function Register() {
                     type={showConfirmPassword ? 'text' : 'password'}
                     placeholder="Confirm your password"
                     value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onChange={(e) => {
+                      setConfirmPassword(e.target.value);
+                      if (confirmPasswordError) setConfirmPasswordError(null);
+                    }}
+                    onBlur={handleConfirmPasswordBlur}
                     required
                     disabled={loading}
                     autoComplete="new-password"
-                    className="pr-10"
+                    className={`pr-10 ${confirmPasswordError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                   />
                   <button
                     type="button"
@@ -159,11 +262,12 @@ export function Register() {
                     )}
                   </button>
                 </div>
-                {passwordError && (
-                  <p className="text-sm text-red-600">{passwordError}</p>
+                {confirmPasswordError && (
+                  <p className="text-sm text-red-500 mt-1">{confirmPasswordError}</p>
                 )}
               </div>
 
+              {/* Role */}
               <div className="space-y-2">
                 <Label>I want to</Label>
                 <RadioGroup
